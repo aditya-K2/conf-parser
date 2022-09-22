@@ -1,0 +1,21 @@
+{
+  "audio_output": {
+    "name": "mpd pulse-audio-output",
+    "type": "pulse"
+  },
+  "audio_output-Copy": {
+    "format": "44100:16:2",
+    "name": "toggle_visualizer",
+    "path": "/tmp/mpd.fifo",
+    "type": "fifo"
+  },
+  "auto_update": "yes",
+  "bind_to_address": "127.0.0.1",
+  "db_file": "~/.config/mpd/database",
+  "log_file": "syslog",
+  "music_directory": "/D/Downloads/Music",
+  "pid_file": "~/.config/mpd/pid",
+  "playlist_directory": "~/.config/mpd/playlists",
+  "restore_paused": "yes",
+  "state_file": "~/.config/mpd/state"
+}
