@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -76,7 +78,7 @@ func GenerateMap(s string) map[string]interface{} {
 				}
 			}
 			st.Pop()
-		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' {
+		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' || s[i] == '\n' {
 			continue
 		} else if s[i] == ',' {
 			switch cMap.(type) {
@@ -102,6 +104,24 @@ func PrettyPrint(m map[string]interface{}) {
 }
 
 func main() {
-	m := GenerateMap("{ aditya : { you : {lmao : \"what\", bier : [[23, bkjsd,], what,], } , akldfj : 5, }, what : 3, } , bitch : 1,}")
-	PrettyPrint(m)
+	var path string = ""
+	if len(os.Args) < 2 {
+		fmt.Println("No File Provided!")
+		os.Exit(-1)
+	} else {
+		path = os.Args[1]
+	}
+	var s string
+	if path != "" {
+		content, err := ioutil.ReadFile(path)
+		if err != nil {
+			fmt.Println("No File Found at path : " + path)
+			os.Exit(-1)
+		}
+		s = string(content)
+		m := GenerateMap(s)
+		PrettyPrint(m)
+	} else {
+		fmt.Println("Path is Empty!")
+	}
 }
