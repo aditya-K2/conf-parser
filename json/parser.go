@@ -7,17 +7,32 @@ import (
 )
 
 func GenerateMap(s string) map[string]interface{} {
-	var st Stack[map[string]interface{}]
+	var st Stack[interface{}]
 	m := make(map[string]interface{})
 	var w string
-	current_map := m
+	var cMap interface{} = m
 	for i := range s {
-		if s[i] == '{' {
+		if s[i] == '{' || s[i] == '[' {
 			if i != 0 {
-				st.Push(current_map)
-				z := make(map[string]interface{})
-				current_map[w] = z
-				current_map = z
+				st.Push(cMap)
+				var z interface{}
+				if s[i] == '{' {
+					z = make(map[string]interface{})
+				} else {
+					b := make([]interface{}, 0)
+					z = &b
+				}
+				switch cMap.(type) {
+				case map[string]interface{}:
+					{
+						cMap.(map[string]interface{})[w] = z
+					}
+				case *[]interface{}:
+					{
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), z)
+					}
+				}
+				cMap = z
 				w = ""
 				i++
 				for s[i] == ' ' {
@@ -30,7 +45,7 @@ func GenerateMap(s string) map[string]interface{} {
 			for s[i] != ' ' {
 				i++
 			}
-			if s[i] != '{' {
+			if s[i] != '{' && s[i] != '[' {
 				var val string = ""
 				for s[i] != ',' {
 					if s[i] != '"' {
@@ -39,17 +54,43 @@ func GenerateMap(s string) map[string]interface{} {
 					i++
 				}
 				i++
-				current_map[w] = strings.TrimSpace(val)
+				switch cMap.(type) {
+				case map[string]interface{}:
+					{
+						cMap.(map[string]interface{})[w] = strings.TrimSpace(val)
+					}
+				case *[]interface{}:
+					{
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), val)
+					}
+				}
 			} else {
 				continue
 			}
-		} else if s[i] == '}' && !st.Empty() {
-			current_map = st.Top()
-			st.Pop()
-			w = ""
+		} else if (s[i] == '}' || s[i] == ']') && !st.Empty() {
+			fmt.Println(cMap)
+			switch st.Top().(type) {
+			case map[string]interface{}:
+				{
+					cMap = st.Top()
+					st.Pop()
+					w = ""
+				}
+			case *[]interface{}:
+				{
+					cMap = st.Top()
+					st.Pop()
+				}
+			}
 		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' {
 			continue
 		} else if s[i] == ',' {
+			switch cMap.(type) {
+			case *[]interface{}:
+				{
+					*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+				}
+			}
 			w = ""
 		} else {
 			w += string(s[i])
@@ -67,5 +108,6 @@ func PrettyPrint(m map[string]interface{}) {
 }
 
 func main() {
-	PrettyPrint(GenerateMap("{ aditya : { you : {lmao : \"what\", bier : {what : 5, who : 3, } , akldfj : 5, }, what : 3, } , bitch : 1,}"))
+	m := GenerateMap("{ aditya : { you : {lmao : \"what\", bier : [[23, bkjsd,], what,], } , akldfj : 5, }, what : 3, } , bitch : 1,}")
+	PrettyPrint(m)
 }
