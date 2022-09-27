@@ -11,14 +11,8 @@ import (
 func GenerateMap(s string) interface{} {
 	var st Stack[interface{}]
 	var m interface{}
-	if s[0] == '[' {
-		b := make([]interface{}, 0)
-		m = &b
-	} else if s[0] == '{' {
-		m = make(map[string]interface{})
-	}
 	var w string
-	var cMap interface{} = m
+	var cMap interface{}
 	for i := range s {
 		if s[i] == '{' || s[i] == '[' {
 			if i != 0 {
@@ -47,7 +41,13 @@ func GenerateMap(s string) interface{} {
 					i++
 				}
 			} else {
-				continue
+				if s[i] == '[' {
+					b := make([]interface{}, 0)
+					m = &b
+				} else if s[0] == '{' {
+					m = make(map[string]interface{})
+				}
+				cMap = m
 			}
 		} else if s[i] == ':' {
 			for s[i] != ' ' {
@@ -82,6 +82,7 @@ func GenerateMap(s string) interface{} {
 			switch cMap.(type) {
 			case *[]interface{}:
 				{
+					// Adding Last Element to the array.
 					if s[i] == ']' {
 						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
 					}
