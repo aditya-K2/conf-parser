@@ -4,5 +4,5 @@
 ---
 
 - [x] Conf
-- [ ] JSON
+- [x] JSON (WIP)
 - [ ] YAML

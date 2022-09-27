@@ -84,7 +84,9 @@ func GenerateMap(s string) map[string]interface{} {
 			switch cMap.(type) {
 			case *[]interface{}:
 				{
-					*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+					if w != "" {
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+					}
 				}
 			}
 			w = ""
