@@ -15,15 +15,17 @@ func GenerateMap(s string) interface{} {
 	var cMap interface{}
 	for i := range s {
 		if s[i] == '{' || s[i] == '[' {
-			if i != 0 {
+			var z interface{}
+			if s[i] == '{' {
+				z = make(map[string]interface{})
+			} else {
+				b := make([]interface{}, 0)
+				z = &b
+			}
+			if i == 0 {
+				m = z
+			} else {
 				st.Push(cMap)
-				var z interface{}
-				if s[i] == '{' {
-					z = make(map[string]interface{})
-				} else {
-					b := make([]interface{}, 0)
-					z = &b
-				}
 				switch cMap.(type) {
 				case map[string]interface{}:
 					{
@@ -34,20 +36,12 @@ func GenerateMap(s string) interface{} {
 						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), z)
 					}
 				}
-				cMap = z
-				w = ""
+			}
+			cMap = z
+			w = ""
+			i++
+			for s[i] == ' ' {
 				i++
-				for s[i] == ' ' {
-					i++
-				}
-			} else {
-				if s[i] == '[' {
-					b := make([]interface{}, 0)
-					m = &b
-				} else if s[0] == '{' {
-					m = make(map[string]interface{})
-				}
-				cMap = m
 			}
 		} else if s[i] == ':' {
 			for s[i] != ' ' {
