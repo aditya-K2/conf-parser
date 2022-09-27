@@ -28,6 +28,8 @@ func ParseVal(val interface{}) interface{} {
 			if v, err := strconv.ParseBool(s); err == nil {
 				return v
 			}
+		} else if s == "null" {
+			return nil
 		}
 		return s
 	} else {
