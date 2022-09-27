@@ -5,8 +5,35 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
+
+var (
+	inQuotes bool = false
+)
+
+func ParseVal(val interface{}) interface{} {
+	if !inQuotes {
+		s := val.(string)
+		if s[0] <= '9' && s[0] >= '0' {
+			if strings.Contains(s, ".") {
+				if v, err := strconv.ParseFloat(s, 64); err == nil {
+					return v
+				}
+			} else if v, err := strconv.ParseInt(s, 10, 64); err == nil {
+				return v
+			}
+		} else if s[0] == 'f' || s[0] == 't' {
+			if v, err := strconv.ParseBool(s); err == nil {
+				return v
+			}
+		}
+		return s
+	} else {
+		return val
+	}
+}
 
 func GenerateMap(s string) interface{} {
 	var st Stack[interface{}]
@@ -44,33 +71,35 @@ func GenerateMap(s string) interface{} {
 				i++
 			}
 		} else if s[i] == ':' {
-			for s[i] != ' ' {
-				i++
-			}
-			if s[i] != '{' && s[i] != '[' {
-				var val string = ""
-				for s[i] != ',' {
-					if s[i] == ']' || s[i] == '}' {
-						break
-					}
-					if s[i] != '"' {
-						val += string(s[i])
-					}
+			if !inQuotes {
+				for s[i] != ' ' {
 					i++
 				}
-				i++
-				switch cMap.(type) {
-				case map[string]interface{}:
-					{
-						cMap.(map[string]interface{})[w] = strings.TrimSpace(val)
+				if s[i] != '{' && s[i] != '[' {
+					var val string = ""
+					for s[i] != ',' {
+						if s[i] == ']' || s[i] == '}' {
+							break
+						}
+						if s[i] != '"' {
+							val += string(s[i])
+						}
+						i++
 					}
-				case *[]interface{}:
-					{
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), val)
+					i++
+					switch cMap.(type) {
+					case map[string]interface{}:
+						{
+							cMap.(map[string]interface{})[w] = ParseVal(strings.TrimSpace(val))
+						}
+					case *[]interface{}:
+						{
+							*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(val))
+						}
 					}
+				} else {
+					continue
 				}
-			} else {
-				continue
 			}
 		} else if (s[i] == '}' || s[i] == ']') && !st.Empty() {
 			switch cMap.(type) {
@@ -78,7 +107,7 @@ func GenerateMap(s string) interface{} {
 				{
 					// Adding Last Element to the array.
 					if s[i] == ']' {
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(w))
 					}
 				}
 			}
@@ -86,13 +115,16 @@ func GenerateMap(s string) interface{} {
 			st.Pop()
 			w = ""
 		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' || s[i] == '\n' {
+			if s[i] == '"' {
+				inQuotes = !inQuotes
+			}
 			continue
 		} else if s[i] == ',' {
 			switch cMap.(type) {
 			case *[]interface{}:
 				{
 					if w != "" {
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(w))
 					}
 				}
 			}
