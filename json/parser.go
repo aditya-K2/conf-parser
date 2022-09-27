@@ -68,20 +68,14 @@ func GenerateMap(s string) map[string]interface{} {
 				continue
 			}
 		} else if (s[i] == '}' || s[i] == ']') && !st.Empty() {
-			fmt.Println(cMap)
+			cMap = st.Top()
 			switch st.Top().(type) {
 			case map[string]interface{}:
 				{
-					cMap = st.Top()
-					st.Pop()
 					w = ""
 				}
-			case *[]interface{}:
-				{
-					cMap = st.Top()
-					st.Pop()
-				}
 			}
+			st.Pop()
 		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' {
 			continue
 		} else if s[i] == ',' {
