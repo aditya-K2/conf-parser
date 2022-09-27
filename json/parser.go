@@ -8,9 +8,15 @@ import (
 	"strings"
 )
 
-func GenerateMap(s string) map[string]interface{} {
+func GenerateMap(s string) interface{} {
 	var st Stack[interface{}]
-	m := make(map[string]interface{})
+	var m interface{}
+	if s[0] == '[' {
+		b := make([]interface{}, 0)
+		m = &b
+	} else if s[0] == '{' {
+		m = make(map[string]interface{})
+	}
 	var w string
 	var cMap interface{} = m
 	for i := range s {
@@ -50,6 +56,9 @@ func GenerateMap(s string) map[string]interface{} {
 			if s[i] != '{' && s[i] != '[' {
 				var val string = ""
 				for s[i] != ',' {
+					if s[i] == ']' || s[i] == '}' {
+						break
+					}
 					if s[i] != '"' {
 						val += string(s[i])
 					}
@@ -70,14 +79,17 @@ func GenerateMap(s string) map[string]interface{} {
 				continue
 			}
 		} else if (s[i] == '}' || s[i] == ']') && !st.Empty() {
-			cMap = st.Top()
-			switch st.Top().(type) {
-			case map[string]interface{}:
+			switch cMap.(type) {
+			case *[]interface{}:
 				{
-					w = ""
+					if s[i] == ']' {
+						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), w)
+					}
 				}
 			}
+			cMap = st.Top()
 			st.Pop()
+			w = ""
 		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' || s[i] == '\n' {
 			continue
 		} else if s[i] == ',' {
@@ -97,7 +109,7 @@ func GenerateMap(s string) map[string]interface{} {
 	return m
 }
 
-func PrettyPrint(m map[string]interface{}) {
+func PrettyPrint(m interface{}) {
 	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
