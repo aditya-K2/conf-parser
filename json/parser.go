@@ -24,10 +24,10 @@ func ParseVal(val interface{}) interface{} {
 			} else if v, err := strconv.ParseInt(s, 10, 64); err == nil {
 				return v
 			}
-		} else if s[0] == 'f' || s[0] == 't' {
-			if v, err := strconv.ParseBool(s); err == nil {
-				return v
-			}
+		} else if s == "false" {
+			return false
+		} else if s == "true" {
+			return true
 		} else if s == "null" {
 			return nil
 		}
