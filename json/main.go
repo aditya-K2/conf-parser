@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -38,10 +37,13 @@ func ParseVal(val interface{}) interface{} {
 }
 
 func GenerateMap(s string) interface{} {
-	var st Stack[interface{}]
-	var m interface{}
-	var w string
-	var cMap interface{}
+	var (
+		st Stack[interface{}]
+		m  interface{}
+		w  string
+		// current object
+		cm interface{}
+	)
 	for i := range s {
 		if s[i] == '{' || s[i] == '[' {
 			var z interface{}
@@ -54,19 +56,19 @@ func GenerateMap(s string) interface{} {
 			if i == 0 {
 				m = z
 			} else {
-				st.Push(cMap)
-				switch cMap.(type) {
+				st.Push(cm)
+				switch cm.(type) {
 				case map[string]interface{}:
 					{
-						cMap.(map[string]interface{})[w] = z
+						cm.(map[string]interface{})[w] = z
 					}
 				case *[]interface{}:
 					{
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), z)
+						*cm.(*[]interface{}) = append(*cm.(*[]interface{}), z)
 					}
 				}
 			}
-			cMap = z
+			cm = z
 			w = ""
 			i++
 			for s[i] == ' ' {
@@ -89,14 +91,14 @@ func GenerateMap(s string) interface{} {
 						i++
 					}
 					i++
-					switch cMap.(type) {
+					switch cm.(type) {
 					case map[string]interface{}:
 						{
-							cMap.(map[string]interface{})[w] = ParseVal(strings.TrimSpace(val))
+							cm.(map[string]interface{})[w] = ParseVal(strings.TrimSpace(val))
 						}
 					case *[]interface{}:
 						{
-							*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(val))
+							*cm.(*[]interface{}) = append(*cm.(*[]interface{}), ParseVal(val))
 						}
 					}
 				} else {
@@ -104,16 +106,16 @@ func GenerateMap(s string) interface{} {
 				}
 			}
 		} else if (s[i] == '}' || s[i] == ']') && !st.Empty() {
-			switch cMap.(type) {
+			switch cm.(type) {
 			case *[]interface{}:
 				{
 					// Adding Last Element to the array.
 					if s[i] == ']' && len(w) != 0 {
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(w))
+						*cm.(*[]interface{}) = append(*cm.(*[]interface{}), ParseVal(w))
 					}
 				}
 			}
-			cMap = st.Top()
+			cm = st.Top()
 			st.Pop()
 			w = ""
 		} else if s[i] == ' ' || s[i] == '\t' || s[i] == '"' || s[i] == '\n' {
@@ -122,11 +124,11 @@ func GenerateMap(s string) interface{} {
 			}
 			continue
 		} else if s[i] == ',' {
-			switch cMap.(type) {
+			switch cm.(type) {
 			case *[]interface{}:
 				{
 					if w != "" {
-						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(w))
+						*cm.(*[]interface{}) = append(*cm.(*[]interface{}), ParseVal(w))
 					}
 				}
 			}
@@ -147,24 +149,17 @@ func PrettyPrint(m interface{}) {
 }
 
 func main() {
-	var path string = ""
 	if len(os.Args) < 2 {
 		fmt.Println("No File Provided!")
 		os.Exit(-1)
 	} else {
-		path = os.Args[1]
-	}
-	var s string
-	if path != "" {
-		content, err := ioutil.ReadFile(path)
+		path := os.Args[1]
+		content, err := os.ReadFile(path)
 		if err != nil {
 			fmt.Println("No File Found at path : " + path)
 			os.Exit(-1)
 		}
-		s = string(content)
-		m := GenerateMap(s)
+		m := GenerateMap(string(content))
 		PrettyPrint(m)
-	} else {
-		fmt.Println("Path is Empty!")
 	}
 }
