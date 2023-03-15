@@ -108,7 +108,7 @@ func GenerateMap(s string) interface{} {
 			case *[]interface{}:
 				{
 					// Adding Last Element to the array.
-					if s[i] == ']' {
+					if s[i] == ']' && len(w) != 0 {
 						*cMap.(*[]interface{}) = append(*cMap.(*[]interface{}), ParseVal(w))
 					}
 				}
